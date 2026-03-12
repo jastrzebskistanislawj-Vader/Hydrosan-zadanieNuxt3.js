@@ -1,22 +1,26 @@
-<script setup>
+<script setup lang="ts">
 // Inicjalizacja klienta Supabase
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue'
+import type { Database } from '~/types/database'
+import type { Order } from '~/types/order'
 
-const client = useSupabaseClient()
-const orders = ref([])
-const error = ref<String | null>(null)
+const client = useSupabaseClient<Database>()
 
-const page = ref(1) // aktualna strona
-const perPage = 20 // ilość elementów na stronę
+const orders = ref<Order[]>([])
+const loadError = ref<string | null>(null)
 
-const totalPages = ref(1) // całkowita liczba stron (do obliczenia po pobraniu danych)
-const loading = ref(false)
+const page = ref<number>(1) // aktualna strona
+const perPage = ref<number>(20) // ilość elementów na stronę
+const totalPages = ref<number>(1) // całkowita liczba stron
 
-const loadOrders = async () => {
+const loading = ref<boolean>(false)
+
+const loadOrders = async (): Promise<void> => {
   loading.value = true
+  loadError.value = null
   try {    
-    const from = (page.value -1) * perPage
-    const to = from + perPage - 1
+    const from = (page.value -1) * perPage.value
+    const to = from + perPage.value - 1
 
     const { data, error: fetchError, count } = await client
       .from('orders')
@@ -24,51 +28,53 @@ const loadOrders = async () => {
       .order('created_at', { ascending: false })
       .range(from, to) // to jest zakres popbieranych danych
 
-    if (fetchError) {
-      throw fetchError
-    }
+    if (fetchError) throw fetchError
+
     orders.value = data || []
-    totalPages.value = Math.ceil((count || 0) / perPage) // obliczenie ilości stron
-    // console.log('Pobrane zamówienia:', orders.value)
-  } catch (err) {
-    error.value = err.message || 'Nie można pobrać zamówień.'
-    console.error('Błąd:', err)
+    totalPages.value = Math.ceil((count || 0) / perPage.value) // obliczenie ilości stron
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      loadError.value = err.message
+    } else {
+      loadError.value = 'Nieznany błąd podczas ładowania zamówień'
+    }
+  } finally {
+    loading.value = false
   }
 }
 
 onMounted(loadOrders)
 
-const nextPage = () => {
+const nextPage = (): void => {
   page.value++
   loadOrders()
 }
 
-const prevPage = () => {
+const prevPage = (): void => {
   if (page.value > 1) {
     page.value--
     loadOrders()
   }
 }
 
-const goToPage = (pageNum) => {
+const goToPage = (pageNum: number): void => {
   page.value = pageNum
   loadOrders()
 }
 
-const pageInput = ref(page.value) //strona do przeskoku
-const jumpToPage = () => {
-  const num = parseInt(pageInput.value, 10)
+const pageInput = ref<number | null>(page.value) //strona do przeskoku
+const jumpToPage = (): void => {
+  const num = pageInput.value || 0
   if (num > 0 && num <= totalPages.value) {
     goToPage(num)
-    pageInput.value = page.value
-  } else {
-    pageInput.value = page.value
   }
+  
+  pageInput.value = page.value
 }
 
-const pageNumbers = computed(() => {
+const pageNumbers = computed<number[]>(() => {
   const delta = 2
-  const pages = []
+  const pages: number[] = []
   for (let i = Math.max(1, page.value - delta); 
         i <= Math.min(totalPages.value, page.value + delta); 
         i++) {
@@ -77,8 +83,14 @@ const pageNumbers = computed(() => {
   return pages
 })
 
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(value)
+}
 
 
+const testError = (): void => {
+  loadError.value = 'To jest testowy błąd!'
+}
 
 // Miejsce na Twoją logikę pobierania danych, paginację itp.
 // Powodzenia! 🚀
@@ -93,12 +105,19 @@ const pageNumbers = computed(() => {
         <h1 class="text-3xl font-bold text-gray-900">Lista Zamówień</h1>
         <p class="text-gray-500 mt-2">To jest Twoja strona startowa. Powodzenia w zadaniu! 🚀</p>
       </header>
+      <button @click="testError" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+        Error TEST
+      </button>
+      {{ loadError }}
 
       <!-- Główne miejsce na Twoją aplikację -->
       <main>
+        <div v-if="loading" class="text-center py-10">
+          <p class="text-blue-600 font-semibold animate-pulse">Ładowanie zamówień...</p>
+        </div>
 
-        <div v-if="error" class="bg-red-100 text-red-700 p-4 rounded mb-4">
-          Błąd: {{ error }}
+        <div v-if="loadError" class="bg-red-100 text-red-700 p-4 rounded mb-4">
+          Błąd: {{ loadError }}
         </div>
 
         <div v-else-if="orders.length === 0" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
@@ -131,7 +150,7 @@ const pageNumbers = computed(() => {
                     {{ order.status || '-' }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-right font-semibold">{{ order.total_price }} PLN</td>
+                <td class="px-4 py-3 text-right font-semibold">{{ formatCurrency(order.total_price) }}</td>
               </tr>
             </tbody>
           </table>
