@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Order } from '~/types/order'
+import { getStatusColor } from '~/utils/helpers'
 //użył bym importów do wykorzystania funkcji formatowania z utils, ale Nuxt 3 sam je dołącza.
 
 const props = defineProps<{
@@ -43,7 +44,7 @@ const emit = defineEmits(['close'])
             </div>
             
             <div class="mt-4">
-              <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-100 text-blue-800">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider" :class="getStatusColor(order.status)">
                 {{ order.status || 'Nowe' }}
               </span>
             </div>

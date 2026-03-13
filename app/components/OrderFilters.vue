@@ -1,0 +1,90 @@
+<template>
+  <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-4">
+    <h3 class="text-lg font-semibold text-gray-900 mb-3">Filtry zamówień</h3>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <!-- Dropdown dla statusu -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Status</label>
+        <select 
+          v-model="localStatusFilter" 
+          class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Wszystkie</option>
+          <option v-for="status in uniqueStatuses" :key="status" :value="status">{{ status }}</option>
+        </select>
+      </div>
+      
+      <!-- Input dla daty od -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Data od</label>
+        <input 
+          v-model="localDateFrom" 
+          type="date" 
+          class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+      
+      <!-- Input dla daty do -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Data do</label>
+        <input 
+          v-model="localDateTo" 
+          type="date" 
+          class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Dropdown dla ilości na stronę -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Na stronę</label>
+        <select 
+          v-model="localPerPage" 
+          class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
+        </select>
+      </div>
+    </div>
+    
+    <!-- Przycisk zastosuj -->
+    <div class="mt-3 flex justify-end">
+      <button 
+        @click="applyFilters" 
+        class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
+      >
+        Zastosuj filtry
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+
+const props = defineProps<{
+  statusFilter: string
+  dateFrom: string
+  dateTo: string
+  uniqueStatuses: string[]
+  selectedPerPage: number
+  perPageOptions: number[]
+}>()
+
+const emit = defineEmits<{
+  apply: [filters: { status: string; dateFrom: string; dateTo: string, perPage: number}]
+}>()
+
+const localStatusFilter = ref(props.statusFilter)
+const localDateFrom = ref(props.dateFrom)
+const localDateTo = ref(props.dateTo)
+const localPerPage = ref(props.selectedPerPage)
+
+const applyFilters = () => {
+  emit('apply', {
+    status: localStatusFilter.value,
+    dateFrom: localDateFrom.value,
+    dateTo: localDateTo.value,
+    perPage: localPerPage.value,
+  })
+}
+</script>

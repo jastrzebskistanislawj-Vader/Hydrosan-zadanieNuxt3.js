@@ -3,35 +3,74 @@
 import { ref, onMounted, computed } from 'vue'
 import type { Database } from '~/types/database'
 import type { Order } from '~/types/order'
+import { loadUniqueStatuses, getStatusColor } from '~/utils/helpers'
+import OrderFilters from '~/components/OrderFilters.vue'
 
+//router do przechowywania danych o stronie w linku
+const route = useRoute()
+const router = useRouter()
+const loading = ref<boolean>(false)
+
+//działanie na bazie danych Supabase
 const client = useSupabaseClient<Database>()
-
 const orders = ref<Order[]>([])
 const loadError = ref<string | null>(null)
 
-const page = ref<number>(1) // aktualna strona
+// Paginacja - zarządzanie stanem paginacji
+const initialPage = Number(route.query.page ?? 1) || 1 // łapanie strony z url, jesli jest i jest poprawnie konwertowan w innym przypadu 1
+const page = ref<number>(initialPage) //ustawiania aktualnej strony
 const perPage = ref<number>(20) // ilość elementów na stronę
 const totalPages = ref<number>(1) // całkowita liczba stron
 
-const loading = ref<boolean>(false)
 
-const loadOrders = async (): Promise<void> => {
+//filtry - zarządzanie stanem filtrów
+const statusFilter = ref<string>('') 
+const dateFrom = ref<string>('')
+const dateTo = ref<string>('')
+const uniqueStatuses = ref<string[]>([])
+const perPageOptions = [10, 20, 50, 100] // opcje ilości na stronę
+const selectedPerPage = ref<number>(20);
+
+const applyFilters = (filters: { status: string; dateFrom: string; dateTo: string; perPage: number }) => {
+  statusFilter.value = filters.status
+  dateFrom.value = filters.dateFrom
+  dateTo.value = filters.dateTo
+  selectedPerPage.value = filters.perPage
+  perPage.value = filters.perPage  // Zaktualizuj perPage
+  page.value = 1  // Reset do strony 1
+  loadOrders({ status: filters.status, dateFrom: filters.dateFrom, dateTo: filters.dateTo })
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const loadOrders = async (filters?: { status?: string; dateFrom?: string; dateTo?: string }): Promise<void> => {
   loading.value = true
   loadError.value = null
-  try {    
-    const from = (page.value -1) * perPage.value
+  try {
+    let query = client
+      .from('orders')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+
+    // Dodaj filtry
+    if (filters?.status) {
+      query = query.eq('status', filters.status) // filtrowanie po statusie, status równy podanemu
+    }
+    if (filters?.dateFrom) {
+      query = query.gte('created_at', filters.dateFrom) // dodwanie warunku zakresu daty, większe lub równe
+    }
+    if (filters?.dateTo) {
+      query = query.lte('created_at', filters.dateTo + 'T23:59:59') // dodawanie warunku zakresu daty, mniejsze lub równe
+    }
+
+    const from = (page.value - 1) * perPage.value
     const to = from + perPage.value - 1
 
-    const { data, error: fetchError, count } = await client
-      .from('orders')
-      .select('*', {count: 'exact'}) //porbranie ilości zamówień
-      .order('created_at', { ascending: false })
-      .range(from, to) // to jest zakres popbieranych danych
+    const { data, error: fetchError, count } = await query.range(from, to)
 
     if (fetchError) throw fetchError
     
     orders.value = data || []
-    totalPages.value = Math.ceil((count || 0) / perPage.value) // obliczenie ilości stron
+    totalPages.value = Math.ceil((count || 0) / perPage.value)
   } catch (err: unknown) {
     if (err instanceof Error) {
       loadError.value = err.message
@@ -43,32 +82,44 @@ const loadOrders = async (): Promise<void> => {
   }
 }
 
-onMounted(loadOrders)
-
-const nextPage = (): void => {
-  page.value++
+onMounted(async () => {
   loadOrders()
-}
+  uniqueStatuses.value = await loadUniqueStatuses(client)
+})
 
-const prevPage = (): void => {
-  if (page.value > 1) {
-    page.value--
-    loadOrders()
-  }
-}
+watch(
+  () => route.query.page,
+  (newPage) => {
+    const pageNum = Number(newPage) || 1
+    if (pageNum !== page.value) {
+      page.value = pageNum
+      loadOrders()
+    }
+  },
+)
 
-const goToPage = (pageNum: number): void => {
+const setPage = (pageNum: number): void => {
   page.value = pageNum
-  loadOrders()
+  router.push({ // tu można wykorzystać replace, jeśłi nie chcemy aby tworzyłą się historia przeglądania przy zmianie strony
+    query: {
+      ...route.query,
+      page: String(pageNum),
+    },
+  })
+}
+
+const goToPage = async (pageNum: number): Promise<void> => {
+  setPage(pageNum)
+  await loadOrders()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const pageInput = ref<number | null>(page.value) //strona do przeskoku
-const jumpToPage = (): void => {
+const jumpToPage = async (): Promise<void> => {
   const num = pageInput.value || 0
   if (num > 0 && num <= totalPages.value) {
-    goToPage(num)
+    await goToPage(num)
   }
-  
   pageInput.value = page.value
 }
 
@@ -109,6 +160,15 @@ const openDetails = (order: Order) => {
         <p class="text-gray-500 mt-2">To jest Twoja strona startowa. Powodzenia w zadaniu! 🚀</p>
       </header>
 
+      <OrderFilters 
+        :status-filter="statusFilter" 
+        :date-from="dateFrom" 
+        :date-to="dateTo" 
+        :unique-statuses="uniqueStatuses" 
+        :selected-per-page="selectedPerPage"
+        :per-page-options="perPageOptions"
+        @apply="applyFilters" 
+      />
       <!-- Główne miejsce na Twoją aplikację -->
       <main class="relative min-h-[600px]">
         <Transition
@@ -158,7 +218,7 @@ const openDetails = (order: Order) => {
                 <td class="px-6 py-4 text-sm text-gray-900 hidden md:table-cell">{{ formatFullDate(order.created_at)}}</td> <!-- Tu można użyć daty bez godziny z utils, zależy od wymagań-->
                 <td class="px-6 py-4 text-sm text-gray-900">{{ order.bill_name }} {{ order.bill_surname }}</td>
                 <td class="px-6 py-4">
-                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" :class="getStatusColor(order.status)">
                     {{ order.status || '-' }}
                   </span>
                 </td>
@@ -172,37 +232,61 @@ const openDetails = (order: Order) => {
 
         <div class="mt-6 flex items-center justify-center gap-4">
           <!-- przyciski nawigacji -->
-          <div class="flex items-center justify-center gap-2">
+          <div class="inline-flex rounded-md shadow-sm" role="group">
+
+            <!-- przycisk do pierwszej strony -->
+            <button 
+              @click="goToPage(1)" 
+              :disabled="page === 1"
+              class="px-3 py-2 text-sm font-medium bg-white border border-gray-200 rounded-l-md hover:bg-gray-50 focus:z-10 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              &lt;&lt;
+            </button>
+
+            <!-- Przycisk do porzedniej strony -->
             <button 
               @click="goToPage(page - 1)" 
               :disabled="page === 1"
-              class="px-3 py-2 bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-3 py-2 text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 focus:z-10 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               ←
             </button>
 
+            <!-- wyświetlanie numerów stron -->
             <button 
               v-for="item in pageNumbers" 
               :key="item"
               @click="goToPage(item)"
               :disabled="item === page"
-              class="px-3 py-2 rounded"
+              class="px-3 py-2 text-sm font-medium border-t border-b border-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-500"
               :class="{
-                'bg-blue-600 text-white': item === page,
-                'bg-gray-100 hover:bg-gray-200': item !== page
+                'bg-blue-600 text-white border-blue-600': item === page,
+                'bg-white hover:bg-gray-50': item !== page
               }"
             >
               {{ item }}
             </button>
-
+            
+            <!-- przycisk do następnej strony -->
             <button 
               @click="goToPage(page + 1)" 
               :disabled="page === totalPages"
-              class="px-3 py-2 bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-3 py-2 text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 focus:z-10 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               →
             </button>
+
+            <!-- Przycisk do ostatniej strony -->
+            <button 
+              @click="goToPage(totalPages)" 
+              :disabled="page === totalPages"
+              class="px-3 py-2 text-sm font-medium bg-white border border-gray-200 rounded-r-md hover:bg-gray-50 focus:z-10 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              &gt;&gt;
+            </button>
           </div>
+
+          
 
           <!-- skoczenie do strony -->
           <div class="flex items-center gap-2 border-l border-gray-300 pl-4">
