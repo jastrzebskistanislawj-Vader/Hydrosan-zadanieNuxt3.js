@@ -23,19 +23,8 @@ const perPage = ref<number>(20) // ilość elementów na stronę
 const totalPages = ref<number>(1) // całkowita liczba stron
 
 
-//filtry - zarządzanie stanem filtrów
-const statusFilter = ref<string>('') 
-const dateFrom = ref<string>('')
-const dateTo = ref<string>('')
-const uniqueStatuses = ref<string[]>([])
-const perPageOptions = [10, 20, 50, 100] // opcje ilości na stronę
-const selectedPerPage = ref<number>(20);
 
 const applyFilters = (filters: { status: string; dateFrom: string; dateTo: string; perPage: number }) => {
-  statusFilter.value = filters.status
-  dateFrom.value = filters.dateFrom
-  dateTo.value = filters.dateTo
-  selectedPerPage.value = filters.perPage
   perPage.value = filters.perPage  // Zaktualizuj perPage
   page.value = 1  // Reset do strony 1
   loadOrders({ status: filters.status, dateFrom: filters.dateFrom, dateTo: filters.dateTo })
@@ -53,7 +42,7 @@ const loadOrders = async (filters?: { status?: string; dateFrom?: string; dateTo
 
     // Dodaj filtry
     if (filters?.status) {
-      query = query.eq('status', filters.status) // filtrowanie po statusie, status równy podanemu
+      query = query.eq('status', filters.status) // filtrowanie po statusie, status równy podanemu z filtra
     }
     if (filters?.dateFrom) {
       query = query.gte('created_at', filters.dateFrom) // dodwanie warunku zakresu daty, większe lub równe
@@ -84,7 +73,6 @@ const loadOrders = async (filters?: { status?: string; dateFrom?: string; dateTo
 
 onMounted(async () => {
   loadOrders()
-  uniqueStatuses.value = await loadUniqueStatuses(client)
 })
 
 watch(
@@ -161,12 +149,6 @@ const openDetails = (order: Order) => {
       </header>
 
       <OrderFilters 
-        :status-filter="statusFilter" 
-        :date-from="dateFrom" 
-        :date-to="dateTo" 
-        :unique-statuses="uniqueStatuses" 
-        :selected-per-page="selectedPerPage"
-        :per-page-options="perPageOptions"
         @apply="applyFilters" 
       />
       <!-- Główne miejsce na Twoją aplikację -->

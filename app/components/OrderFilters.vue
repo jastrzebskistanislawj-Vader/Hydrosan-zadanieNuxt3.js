@@ -60,24 +60,25 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-
-const props = defineProps<{
-  statusFilter: string
-  dateFrom: string
-  dateTo: string
-  uniqueStatuses: string[]
-  selectedPerPage: number
-  perPageOptions: number[]
-}>()
+import { loadUniqueStatuses } from '~/utils/helpers';
 
 const emit = defineEmits<{
-  apply: [filters: { status: string; dateFrom: string; dateTo: string, perPage: number}]
+  apply: [filters: { status: string; dateFrom: string; dateTo: string; perPage: number }]
 }>()
 
-const localStatusFilter = ref(props.statusFilter)
-const localDateFrom = ref(props.dateFrom)
-const localDateTo = ref(props.dateTo)
-const localPerPage = ref(props.selectedPerPage)
+// Wewnętrzne opcje – stała lista
+const perPageOptions = [10, 20, 50, 100]
+
+// Wewnętrzny stan komponentu
+const localStatusFilter = ref('')
+const localDateFrom = ref('')
+const localDateTo = ref('')
+const localPerPage = ref(20)
+const uniqueStatuses = ref<string[]>([])
+
+onMounted(async () => {
+  uniqueStatuses.value = await loadUniqueStatuses(useSupabaseClient())
+})
 
 const applyFilters = () => {
   emit('apply', {
