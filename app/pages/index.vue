@@ -88,6 +88,14 @@ const formatCurrency = (value: number): string => {
 }
 
 
+const selectedOrder = ref<Order | null>(null)
+const isDrawerOpen = ref(false)
+
+const openDetails = (order: Order) => {
+  selectedOrder.value = order
+  isDrawerOpen.value = true
+}
+
 const testError = (): void => {
   loadError.value = 'To jest testowy błąd!'
 }
@@ -136,7 +144,12 @@ const testError = (): void => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="order in orders" :key="order.id" class="border-b hover:bg-gray-50">
+              <tr v-for="order in orders" 
+                  :key="order.id" 
+                  @click="openDetails(order)" 
+                  class="border-b hover:bg-gray-50 cursor-pointer transition-colors group"
+                  >
+
                 <td class="px-4 py-3">{{ order.id }}</td>
                 <td class="px-4 py-3">{{ new Date(order.created_at).toLocaleDateString('pl-PL') }}</td>
                 <td class="px-4 py-3">{{ order.bill_name }} {{ order.bill_surname }}</td>
@@ -151,6 +164,7 @@ const testError = (): void => {
                   </span>
                 </td>
                 <td class="px-4 py-3 text-right font-semibold">{{ formatCurrency(order.total_price) }}</td>
+                
               </tr>
             </tbody>
           </table>
@@ -211,7 +225,11 @@ const testError = (): void => {
           </div>
         </div>
 
-
+        <OrderDetailsDrawer 
+          :order="selectedOrder" 
+          :is-open="isDrawerOpen" 
+          @close="isDrawerOpen = false" 
+        />
 
       </main>
     </div>
