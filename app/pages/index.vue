@@ -86,10 +86,6 @@ const pageNumbers = computed<number[]>(() => {
   return pages
 })
 
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(value)
-}
-
 
 const selectedOrder = ref<Order | null>(null)
 const isDrawerOpen = ref(false)
@@ -139,38 +135,34 @@ const openDetails = (order: Order) => {
           <p class="text-gray-400 text-lg">Nie znaleziono zamówień</p>
         </div>
 
-        <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div v-else class="bg-white rounded-xl shadow-md overflow-hidden overflow-x-auto">
           <table class="w-full">
             <thead>
-              <tr class="bg-gray-100 border-b">
-                <th class="px-4 py-3 text-left font-semibold">ID</th>
-                <th class="px-4 py-3 text-left font-semibold">Data</th>
-                <th class="px-4 py-3 text-left font-semibold">Klient</th>
-                <th class="px-4 py-3 text-left font-semibold">Status</th>
-                <th class="px-4 py-3 text-right font-semibold">Kwota</th>
+              <tr class="bg-gray-50 border-b border-gray-100">
+                <th class="px-6 py-5 text-left font-semibold text-gray-600">ID</th>
+                <th class="px-6 py-5 text-left font-semibold text-gray-600 hidden md:table-cell">Data</th>
+                <th class="px-6 py-5 text-left font-semibold text-gray-600">Klient</th>
+                <th class="px-6 py-5 text-left font-semibold text-gray-600">Status</th>
+                <th class="px-6 py-5 text-right font-semibold text-gray-600">Kwota</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="order in orders" 
+              <tr v-for="(order, index) in orders" 
                   :key="order.id" 
                   @click="openDetails(order)" 
-                  class="border-b hover:bg-gray-50 cursor-pointer transition-colors group"
+                  class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors duration-200"
+                  :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'"
                   >
 
-                <td class="px-4 py-3">{{ order.id }}</td>
-                <td class="px-4 py-3">{{ formatFullDate(order.created_at)}}</td> <!-- do zminy, nie jest potrzebna godzina-->
-                <td class="px-4 py-3">{{ order.bill_name }} {{ order.bill_surname }}</td>
-                <td class="px-4 py-3">
-                  <span class="px-2 py-1 rounded text-sm" :class="{
-                    'bg-green-100 text-green-800': order.status === 'completed',
-                    'bg-yellow-100 text-yellow-800': order.status === 'pending',
-                    'bg-red-100 text-red-800': order.status === 'cancelled',
-                    'bg-gray-100 text-gray-800': !order.status
-                  }">
+                <td class="px-6 py-4 text-sm text-gray-900">{{ order.id }}</td>
+                <td class="px-6 py-4 text-sm text-gray-900 hidden md:table-cell">{{ formatFullDate(order.created_at)}}</td> <!-- Tu można użyć daty bez godziny z utils, zależy od wymagań-->
+                <td class="px-6 py-4 text-sm text-gray-900">{{ order.bill_name }} {{ order.bill_surname }}</td>
+                <td class="px-6 py-4">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                     {{ order.status || '-' }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-right font-semibold">{{ formatCurrency(order.total_price) }}</td>
+                <td class="px-6 py-4 text-right text-sm font-semibold text-gray-900">{{ formatCurrency(order.total_price) }}</td>
                 
               </tr>
             </tbody>

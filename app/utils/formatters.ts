@@ -14,6 +14,21 @@ export const formatCurrency = (value: number | string | null | undefined): strin
   }).format(num)
 }
 
+// Formatuje datę do formatu DD.MM.YYYY
+export const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return '-'
+  
+  const date = new Date(dateString)
+  
+  if (isNaN(date.getTime())) return '-'
+
+  return date.toLocaleDateString('pl-PL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
+
 //Formatuje datę do formatu DD.MM.YYYY HH:mm
 export const formatFullDate = (dateString: string | null | undefined): string => {
   if (!dateString) return '-'
