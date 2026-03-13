@@ -69,7 +69,7 @@ const emit = defineEmits(['close'])
               </section>
             </div>
 
-            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 grid grid-cols-2 gap-4">
+            <div class="bg-gray-100 rounded-xl p-4 border border-gray-100 grid grid-cols-2 gap-4">
               <div>
                 <h4 class="text-xs font-bold text-gray-400 uppercase mb-1">Metoda płatności</h4>
                 <p class="text-sm font-medium">{{ order.payment.name }}</p>
@@ -86,10 +86,7 @@ const emit = defineEmits(['close'])
               <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Produkty ({{ order.products.length }})</h3>
               <div class="divide-y divide-gray-100 border-t border-b overflow-hidden">
                 <div v-for="item in order.products" :key="item.sku" class="py-4 flex gap-4 items-center">
-                  <div class="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-50">
-                    <img v-if="item.image_url" :src="item.image_url" class="h-full w-full object-cover" />
-                    <div v-else class="h-full w-full flex items-center justify-center text-[10px] text-gray-300">Brak foto</div>
-                  </div>
+                  <OrderProductImage :src="item.image_url" :alt="item.name" />
                   <div class="flex flex-1 flex-col">
                     <p class="text-sm font-medium text-gray-900 line-clamp-2 leading-tight">{{ item.name }}</p>
                     <p class="text-xs text-gray-400 mt-1 uppercase tracking-tighter">SKU: {{ item.sku }}</p>
