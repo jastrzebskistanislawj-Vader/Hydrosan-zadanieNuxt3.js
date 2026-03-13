@@ -22,16 +22,14 @@ const page = ref<number>(initialPage) //ustawiania aktualnej strony
 const perPage = ref<number>(20) // ilość elementów na stronę
 const totalPages = ref<number>(1) // całkowita liczba stron
 
-
-
-const applyFilters = (filters: { status: string; dateFrom: string; dateTo: string; perPage: number }) => {
-  perPage.value = filters.perPage  // Zaktualizuj perPage
-  page.value = 1  // Reset do strony 1
-  loadOrders({ status: filters.status, dateFrom: filters.dateFrom, dateTo: filters.dateTo })
+const applyFilters = (filters: Record<string, any>) => {
+  perPage.value = filters.perPage
+  page.value = 1
+  loadOrders(filters) // przekazujesz cały obiekt filtrów
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-const loadOrders = async (filters?: { status?: string; dateFrom?: string; dateTo?: string }): Promise<void> => {
+const loadOrders = async (filters?: Record<string, any>): Promise<void> => {
   loading.value = true
   loadError.value = null
   try {
@@ -49,6 +47,22 @@ const loadOrders = async (filters?: { status?: string; dateFrom?: string; dateTo
     }
     if (filters?.dateTo) {
       query = query.lte('created_at', filters.dateTo + 'T23:59:59') // dodawanie warunku zakresu daty, mniejsze lub równe
+    }
+    if (filters?.searchPhrase && filters?.searchColumn) {
+      const { searchPhrase, searchColumn } = filters;
+      let condition = null;
+      if (searchColumn === 'email_adress') condition = `${searchColumn}.ilike.%${searchPhrase}%`; //kombinacja do szukania po frazie
+      if (searchColumn === 'bill_phone') condition = `${searchColumn}.ilike.%${searchPhrase}%`; 
+      if (searchColumn === 'klient') condition = `bill_name.ilike.%${searchPhrase}%,bill_surname.ilike.%${searchPhrase}%`;
+      if (searchColumn === 'id') { //nie ma opcji szukania po częśći id, pole w supabase jest typu int.
+        const parsedId = Number(searchPhrase);
+        if (!isNaN(parsedId) && searchPhrase.trim() !== '') {
+          condition = `${searchColumn}.eq.${parsedId}`;
+        }
+      }
+      if (condition) {
+        query = query.or(condition);
+      }
     }
 
     const from = (page.value - 1) * perPage.value

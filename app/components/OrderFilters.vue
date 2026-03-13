@@ -6,7 +6,7 @@
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">Status</label>
         <select 
-          v-model="localStatusFilter" 
+          v-model="filters.status" 
           class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">Wszystkie</option>
@@ -18,7 +18,7 @@
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">Data od</label>
         <input 
-          v-model="localDateFrom" 
+          v-model="filters.dateFrom" 
           type="date" 
           class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
@@ -28,7 +28,7 @@
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">Data do</label>
         <input 
-          v-model="localDateTo" 
+          v-model="filters.dateTo" 
           type="date" 
           class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
@@ -38,11 +38,36 @@
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">Na stronę</label>
         <select 
-          v-model="localPerPage" 
+          v-model="filters.perPage" 
           class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
         </select>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-sm font-medium text-gray-600 mb-1">Wyszukaj frazę</label>
+        <input
+          v-model="filters.searchPhrase"
+          :type="filters.searchColumn === 'id' || filters.searchColumn === 'bill_phone' ? 'number' : 'text'"
+          placeholder="Wpisz frazę..."
+          autocomplete="off"
+          class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-2"
+        />
+        <div class="flex flex-wrap gap-2">
+          <label v-for="col in searchColumns" :key="col.value" class="flex items-center">
+            <input
+              type="radio"
+              v-model="filters.searchColumn"
+              :value="col.value"
+              class="mr-1"
+            />
+            {{ col.label }}
+            <span v-if="col.value === 'id' && filters.searchColumn === 'id'" class="ml-2 text-xs text-blue-600 bg-blue-100 rounded px-2 py-1" style="white-space:nowrap;">
+              Szukanie po ID wymaga wpisania całego numeru
+            </span>
+          </label>
+        </div>
       </div>
     </div>
     
@@ -62,30 +87,40 @@
 import { ref } from 'vue'
 import { loadUniqueStatuses } from '~/utils/helpers';
 
-const emit = defineEmits<{
-  apply: [filters: { status: string; dateFrom: string; dateTo: string; perPage: number }]
-}>()
+const emit = defineEmits<{ apply: [filters: Record<string, any>] }>()
 
-// Wewnętrzne opcje – stała lista
+// Stałe opcje
 const perPageOptions = [10, 20, 50, 100]
-
-// Wewnętrzny stan komponentu
-const localStatusFilter = ref('')
-const localDateFrom = ref('')
-const localDateTo = ref('')
-const localPerPage = ref(20)
 const uniqueStatuses = ref<string[]>([])
+const searchColumns = [
+  { label: 'ID', value: 'id' },
+  { label: 'Klient', value: 'klient' },
+  { label: 'Email', value: 'email_adress' },
+  { label: 'Telefon', value: 'bill_phone' },
+]
+
+// Obiekt filtrów
+const filters = ref<{ 
+  status: string;
+  dateFrom: string;
+  dateTo: string;
+  perPage: number;
+  searchPhrase: string;
+  searchColumn: string;
+}>({
+  status: '',
+  dateFrom: '',
+  dateTo: '',
+  perPage: 20,
+  searchPhrase: '',
+  searchColumn: '',
+})
 
 onMounted(async () => {
   uniqueStatuses.value = await loadUniqueStatuses(useSupabaseClient())
 })
 
 const applyFilters = () => {
-  emit('apply', {
-    status: localStatusFilter.value,
-    dateFrom: localDateFrom.value,
-    dateTo: localDateTo.value,
-    perPage: localPerPage.value,
-  })
+  emit('apply', { ...filters.value })
 }
 </script>
