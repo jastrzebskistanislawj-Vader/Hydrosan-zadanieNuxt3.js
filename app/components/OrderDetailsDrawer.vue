@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { Order } from '~/types/order'
 import { getStatusColor } from '~/utils/helpers'
-//użył bym importów do wykorzystania funkcji formatowania z utils, ale Nuxt 3 sam je dołącza.
 
 const props = defineProps<{
   order: Order | null

@@ -3,7 +3,7 @@
 import { ref, onMounted, computed } from 'vue'
 import type { Database } from '~/types/database'
 import type { Order } from '~/types/order'
-import { loadUniqueStatuses, getStatusColor } from '~/utils/helpers'
+import { getStatusColor } from '~/utils/helpers'
 import OrderFilters from '~/components/OrderFilters.vue'
 
 //router do przechowywania danych o stronie w linku
@@ -21,15 +21,17 @@ const initialPage = Number(route.query.page ?? 1) || 1 // łapanie strony z url,
 const page = ref<number>(initialPage) //ustawiania aktualnej strony
 const perPage = ref<number>(20) // ilość elementów na stronę
 const totalPages = ref<number>(1) // całkowita liczba stron
+const currentFilters = ref<Record<string, any>>({})
 
 // Sortowanie
 const sortColumn = ref<string>('created_at')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
 const applyFilters = (filters: Record<string, any>) => {
+  currentFilters.value = filters
   perPage.value = filters.perPage
   page.value = 1
-  loadOrders(filters) // przekazujesz cały obiekt filtrów
+  loadOrders()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -40,16 +42,17 @@ const applyFilters = (filters: Record<string, any>) => {
   dla filtrowania stringów używany jest ilike aby ignorować wielkość liter i dopasowywać częściowo
   dla ID które jest numeryczne używany jest equals aby wymagać dokładnego dopasowania
 */
-const loadOrders = async (filters?: Record<string, any>): Promise<void> => {
+const loadOrders = async (): Promise<void> => {
   loading.value = true
   loadError.value = null
   try {
+    const filters = currentFilters.value
     let query = client
       .from('orders')
       .select('*', { count: 'exact' })
       .order(sortColumn.value, { ascending: sortOrder.value === 'asc' })
 
-    // Dodaj filtry
+    
     if (filters?.status) {
       query = query.eq('status', filters.status) // filtrowanie po statusie, status równy podanemu z filtra
     }
@@ -164,7 +167,7 @@ const jumpToPage = async (): Promise<void> => {
 const pageNumbers = computed<number[]>(() => {
   const delta = 2
   
-  // wyświetlanie zawsze takiej samej ilości stron delta*2+1 ilości numerów stron jeśli jest ich tyle
+  // wyświetlanie zawsze takiej samej ilości stron delta*2+1 jeśli jest ich wystarczająca ilość
   const startPage = Math.max(1, Math.min(page.value - delta, totalPages.value - delta * 2)) 
   const endPage = Math.min(totalPages.value, startPage + delta * 2)
 
@@ -189,9 +192,6 @@ const closeDetails = () => {
   isDrawerOpen.value = false
 }
 
-
-// Miejsce na Twoją logikę pobierania danych, paginację itp.
-// Powodzenia! 🚀
 </script>
 
 <template>
@@ -200,8 +200,7 @@ const closeDetails = () => {
       
       <!-- Nagłówek powitalny (śmiało, możesz go usunąć lub zmodyfikować!) -->
       <header class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Lista Zamówień</h1>
-        <p class="text-gray-500 mt-2">To jest Twoja strona startowa. Powodzenia w zadaniu! 🚀</p>
+        <h1 class="text-3xl font-bold text-gray-900">Prosta Lista Zamówień</h1>
       </header>
 
       <OrderFilters 
