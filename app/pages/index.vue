@@ -59,6 +59,12 @@ const loadOrders = async (filters?: Record<string, any>): Promise<void> => {
     if (filters?.dateTo) {
       query = query.lte('created_at', filters.dateTo + 'T23:59:59') // dodawanie warunku zakresu daty, mniejsze lub równe
     }
+    if (filters?.priceFrom) {
+      query = query.gte('total_price', filters.priceFrom) // Filtrowanie od kwoty
+    }
+    if (filters?.priceTo) {
+      query = query.lte('total_price', filters.priceTo) // Filtrowanie do kwoty
+    }
     if (filters?.searchPhrase && filters?.searchColumn) {
       const { searchPhrase, searchColumn } = filters;
       const phrase = searchPhrase.trim();
