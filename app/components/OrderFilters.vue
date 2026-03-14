@@ -31,12 +31,22 @@
           </div>
         </div>
 
-        <div class="col-span-1 flex items-start">
+        <div class="col-span-1 flex items-start gap-2">
           <button 
             @click="applyFilters" 
-            class="w-full px-4 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500"
+            class="flex-[3] px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 font-medium transition-colors text-sm"
           >
             Zastosuj
+          </button>
+          <button 
+            @click="clearFilters" 
+            title="Wyczyść filtry"
+            class="flex-[1] px-2 py-1 bg-gray-100 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-400 flex items-center justify-center transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
           </button>
         </div>
       </div>
@@ -90,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { loadUniqueStatuses } from '~/utils/helpers';
 
 const emit = defineEmits<{ apply: [filters: Record<string, any>] }>()
@@ -126,6 +136,7 @@ const clearFilters = () => {
   filters.perPage = 20
   filters.searchPhrase = ''
   filters.searchColumn = 'klient'
+  applyFilters()
 }
 
 const applyFilters = () => {
