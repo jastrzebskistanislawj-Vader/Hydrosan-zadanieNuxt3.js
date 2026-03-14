@@ -14,7 +14,7 @@
               placeholder="Wpisz frazę..."
               autocomplete="off"
               @keyup.enter="applyFilters"
-              class="w-full pl-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              class="w-full pl-2 h-[34px] border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               :class="filters.searchPhrase ? 'pr-8' : 'pr-2'"
             />
             <button 
@@ -44,14 +44,14 @@
         <div class="col-span-1 flex items-start gap-2">
           <button 
             @click="applyFilters" 
-            class="flex-[3] px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 font-medium transition-colors text-base"
+            class="flex-[3] h-[34px] inline-flex items-center justify-center px-2 bg-blue-600 text-white border border-transparent rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 font-medium transition-colors text-sm"
           >
             Zastosuj
           </button>
           <button 
             @click="clearFilters" 
             title="Wyczyść filtry"
-            class="flex-[1] px-2 py-1 bg-gray-100 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-400 flex items-center justify-center transition-colors"
+            class="flex-[1] h-[34px] inline-flex items-center justify-center px-2 bg-gray-100 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-400 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
@@ -69,7 +69,7 @@
         <div class="relative">
           <select 
             v-model="filters.status" 
-            class="w-full pl-2 pr-10 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+            class="w-full pl-2 pr-10 h-[34px] border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
           >
             <option value="">Wszystkie</option>
             <option v-for="status in uniqueStatuses" :key="status" :value="status">{{ status }}</option>
@@ -94,7 +94,7 @@
           <input 
             v-model="filters.dateFrom" 
             type="date" 
-            class="w-full pl-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            class="w-full pl-2 h-[34px] border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             :class="filters.dateFrom ? 'pr-6' : 'pr-2'"
           />
           <button 
@@ -114,7 +114,7 @@
           <input 
             v-model="filters.dateTo" 
             type="date" 
-            class="w-full pl-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            class="w-full pl-2 h-[34px] border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             :class="filters.dateTo ? 'pr-6' : 'pr-2'"
           />
           <button 
@@ -132,7 +132,7 @@
         <label class="block text-sm font-medium text-gray-600 mb-1">Na stronę</label>
         <select 
           v-model="filters.perPage" 
-          class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          class="w-full px-2 h-[34px] border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option v-for="option in perPageOptions" :key="option" :value="option">{{ option }}</option>
         </select>
@@ -151,11 +151,11 @@ const emit = defineEmits<{ apply: [filters: Record<string, any>] }>()
 const perPageOptions = [10, 20, 50, 100]
 const uniqueStatuses = ref<string[]>([])
 const searchColumns = [
-  { label: 'Klient', value: 'klient', title: 'Szuka frazy w imieniu i nazwisku klienta' },
+  { label: 'Imie', value: 'bill_name', title: 'Szuka frazy w imieniu' },
   { label: 'ID', value: 'id', title: 'Szukanie po ID wymaga wpisania całego numeru' },
   { label: 'Email', value: 'email_adress', title: 'Szuka frazy w adresie email' },
   { label: 'Telefon', value: 'bill_phone', title: 'Szuka frazy w numerze telefonu' },
-  { label: 'status', value: 'bill_status', title: 'Szuka frazy w statusie' },
+  { label: 'status', value: 'status', title: 'Szuka frazy w statusie' },
 ]
 
 // Obiekt filtrów
@@ -165,7 +165,7 @@ const filters = reactive({
   dateTo: '',
   perPage: 20,
   searchPhrase: '',
-  searchColumn: 'klient' // Domyślnie wybór
+  searchColumn: 'bill_name' // Domyślnie wybór
 })
 
 onMounted(async () => {
@@ -178,7 +178,7 @@ const clearFilters = () => {
   filters.dateTo = ''
   filters.perPage = 20
   filters.searchPhrase = ''
-  filters.searchColumn = 'klient'
+  filters.searchColumn = 'bill_name'
   applyFilters()
 }
 

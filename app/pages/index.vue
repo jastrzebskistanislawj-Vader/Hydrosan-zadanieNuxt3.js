@@ -22,6 +22,10 @@ const page = ref<number>(initialPage) //ustawiania aktualnej strony
 const perPage = ref<number>(20) // ilość elementów na stronę
 const totalPages = ref<number>(1) // całkowita liczba stron
 
+// Sortowanie
+const sortColumn = ref<string>('created_at')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
 const applyFilters = (filters: Record<string, any>) => {
   perPage.value = filters.perPage
   page.value = 1
@@ -29,6 +33,13 @@ const applyFilters = (filters: Record<string, any>) => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+/*
+  Funkcja do ładowania zamówień z bazy danych Supabase z obsługą paginacji i filtrów.
+  Przyjmuje opcjonalny obiekt filtrów, który może zawierać status, zakres daty i frazę wyszukiwania.
+  Fraza wyszukiwania jest dynamicznie dopasowywana do wybranej kolumny, 
+  dla filtrowania stringów używany jest ilike aby ignorować wielkość liter i dopasowywać częściowo
+  dla ID które jest numeryczne używany jest equals aby wymagać dokładnego dopasowania
+*/
 const loadOrders = async (filters?: Record<string, any>): Promise<void> => {
   loading.value = true
   loadError.value = null
@@ -36,7 +47,7 @@ const loadOrders = async (filters?: Record<string, any>): Promise<void> => {
     let query = client
       .from('orders')
       .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false })
+      .order(sortColumn.value, { ascending: sortOrder.value === 'asc' })
 
     // Dodaj filtry
     if (filters?.status) {
@@ -53,13 +64,9 @@ const loadOrders = async (filters?: Record<string, any>): Promise<void> => {
       const phrase = searchPhrase.trim();
       let condition: string | null = null;
 
-      // szukanie po imieni LUB nazwisku klienta
-      if (searchColumn === 'klient') {
-        condition = `bill_name.ilike.%${phrase}%,bill_surname.ilike.%${phrase}%`;
-      } 
       
       // szukanie po ID które jest typu numerycznego więc dopasowanie jedynie na equals
-      else if (searchColumn === 'id') {
+      if (searchColumn === 'id') {
         const parsedId = Number(phrase);
         if (!isNaN(parsedId) && phrase !== '') {
           condition = `${searchColumn}.eq.${parsedId}`;
@@ -111,6 +118,17 @@ watch(
     }
   },
 )
+
+const toggleSort = (column: string) => {
+  if (sortColumn.value === column) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortColumn.value = column
+    sortOrder.value = 'desc'
+  }
+  page.value = 1
+  loadOrders()
+}
 
 const setPage = (pageNum: number): void => {
   page.value = pageNum
@@ -213,11 +231,46 @@ const closeDetails = () => {
           <table class="w-full">
             <thead>
               <tr class="bg-gray-50 border-b border-gray-100">
-                <th class="px-6 py-5 text-left font-semibold text-gray-600">ID</th>
-                <th class="px-6 py-5 text-left font-semibold text-gray-600 hidden md:table-cell">Data</th>
-                <th class="px-6 py-5 text-left font-semibold text-gray-600">Klient</th>
-                <th class="px-6 py-5 text-left font-semibold text-gray-600">Status</th>
-                <th class="px-6 py-5 text-right font-semibold text-gray-600">Kwota</th>
+                <th @click="toggleSort('id')" class="px-6 py-5 text-left font-semibold text-gray-600 cursor-pointer hover:text-blue-600 transition-colors group">
+                  <div class="flex items-center gap-1">
+                    ID
+                    <span :class="{'opacity-100': sortColumn === 'id', 'opacity-0 group-hover:opacity-50': sortColumn !== 'id'}">
+                      {{ sortOrder === 'asc' ? '↑' : '↓' }}
+                    </span>
+                  </div>
+                </th>
+                <th @click="toggleSort('created_at')" class="px-6 py-5 text-left font-semibold text-gray-600 hidden md:table-cell cursor-pointer hover:text-blue-600 transition-colors group">
+                  <div class="flex items-center gap-1">
+                    Data
+                    <span :class="{'opacity-100': sortColumn === 'created_at', 'opacity-0 group-hover:opacity-50': sortColumn !== 'created_at'}">
+                      {{ sortOrder === 'asc' ? '↑' : '↓' }}
+                    </span>
+                  </div>
+                </th>
+                <th @click="toggleSort('bill_surname')" class="px-6 py-5 text-left font-semibold text-gray-600 cursor-pointer hover:text-blue-600 transition-colors group">
+                  <div class="flex items-center gap-1">
+                    Klient
+                    <span :class="{'opacity-100': sortColumn === 'bill_surname', 'opacity-0 group-hover:opacity-50': sortColumn !== 'bill_surname'}">
+                      {{ sortOrder === 'asc' ? '↑' : '↓' }}
+                    </span>
+                  </div>
+                </th>
+                <th @click="toggleSort('status')" class="px-6 py-5 text-left font-semibold text-gray-600 cursor-pointer hover:text-blue-600 transition-colors group">
+                  <div class="flex items-center gap-1">
+                    Status
+                    <span :class="{'opacity-100': sortColumn === 'status', 'opacity-0 group-hover:opacity-50': sortColumn !== 'status'}">
+                      {{ sortOrder === 'asc' ? '↑' : '↓' }}
+                    </span>
+                  </div>
+                </th>
+                <th @click="toggleSort('total_price')" class="px-6 py-5 text-right font-semibold text-gray-600 cursor-pointer hover:text-blue-600 transition-colors group">
+                  <div class="flex items-center justify-end gap-1">
+                    Kwota
+                    <span :class="{'opacity-100': sortColumn === 'total_price', 'opacity-0 group-hover:opacity-50': sortColumn !== 'total_price'}">
+                      {{ sortOrder === 'asc' ? '↑' : '↓' }}
+                    </span>
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
