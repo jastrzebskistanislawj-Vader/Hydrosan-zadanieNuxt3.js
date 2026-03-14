@@ -7,14 +7,24 @@
       <label class="block text-sm font-medium text-gray-600 mb-1">Wyszukaj frazę</label>
       <div class="grid grid-cols-4 gap-2">
         <div class="col-span-3">
-          <input
-            v-model="filters.searchPhrase"
-            :type="filters.searchColumn === 'id' || filters.searchColumn === 'bill_phone' ? 'number' : 'text'"
-            placeholder="Wpisz frazę..."
-            autocomplete="off"
-            @keyup.enter="applyFilters"
-            class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+          <div class="relative">
+            <input
+              v-model="filters.searchPhrase"
+              :type="filters.searchColumn === 'id' || filters.searchColumn === 'bill_phone' ? 'number' : 'text'"
+              placeholder="Wpisz frazę..."
+              autocomplete="off"
+              @keyup.enter="applyFilters"
+              class="w-full pl-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              :class="filters.searchPhrase ? 'pr-8' : 'pr-2'"
+            />
+            <button 
+              v-if="filters.searchPhrase"
+              @click="filters.searchPhrase = ''; applyFilters()"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
           <div class="flex flex-wrap gap-2 mt-2">
             <label v-for="col in searchColumns" :key="col.value" class="flex items-center">
               <input
@@ -34,7 +44,7 @@
         <div class="col-span-1 flex items-start gap-2">
           <button 
             @click="applyFilters" 
-            class="flex-[3] px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 font-medium transition-colors text-sm"
+            class="flex-[3] px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 font-medium transition-colors text-base"
           >
             Zastosuj
           </button>
@@ -56,33 +66,65 @@
       <!-- Dropdown dla statusu -->
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">Status</label>
-        <select 
-          v-model="filters.status" 
-          class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">Wszystkie</option>
-          <option v-for="status in uniqueStatuses" :key="status" :value="status">{{ status }}</option>
-        </select>
+        <div class="relative">
+          <select 
+            v-model="filters.status" 
+            class="w-full pl-2 pr-10 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+          >
+            <option value="">Wszystkie</option>
+            <option v-for="status in uniqueStatuses" :key="status" :value="status">{{ status }}</option>
+          </select>
+          <button 
+            v-if="filters.status"
+            @click="filters.status = ''; applyFilters()"
+            class="absolute right-7 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            ✕
+          </button>
+          <div class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </div>
+        </div>
       </div>
       
       <!-- Input dla daty od -->
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">Data od</label>
-        <input 
-          v-model="filters.dateFrom" 
-          type="date" 
-          class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
+        <div class="relative">
+          <input 
+            v-model="filters.dateFrom" 
+            type="date" 
+            class="w-full pl-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            :class="filters.dateFrom ? 'pr-6' : 'pr-2'"
+          />
+          <button 
+            v-if="filters.dateFrom"
+            @click="filters.dateFrom = ''; applyFilters()"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 z-10 text-base"
+          >
+            ✕
+          </button>
+        </div>
       </div>
       
       <!-- Input dla daty do -->
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">Data do</label>
-        <input 
-          v-model="filters.dateTo" 
-          type="date" 
-          class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
+        <div class="relative">
+          <input 
+            v-model="filters.dateTo" 
+            type="date" 
+            class="w-full pl-2 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            :class="filters.dateTo ? 'pr-6' : 'pr-2'"
+          />
+          <button 
+            v-if="filters.dateTo"
+            @click="filters.dateTo = ''; applyFilters()"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 z-10 text-base"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       <!-- Dropdown dla ilości na stronę -->
@@ -100,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { loadUniqueStatuses } from '~/utils/helpers';
 
 const emit = defineEmits<{ apply: [filters: Record<string, any>] }>()
@@ -113,6 +155,7 @@ const searchColumns = [
   { label: 'ID', value: 'id', title: 'Szukanie po ID wymaga wpisania całego numeru' },
   { label: 'Email', value: 'email_adress', title: 'Szuka frazy w adresie email' },
   { label: 'Telefon', value: 'bill_phone', title: 'Szuka frazy w numerze telefonu' },
+  { label: 'status', value: 'bill_status', title: 'Szuka frazy w statusie' },
 ]
 
 // Obiekt filtrów

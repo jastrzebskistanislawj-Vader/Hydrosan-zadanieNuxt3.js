@@ -50,16 +50,28 @@ const loadOrders = async (filters?: Record<string, any>): Promise<void> => {
     }
     if (filters?.searchPhrase && filters?.searchColumn) {
       const { searchPhrase, searchColumn } = filters;
-      let condition = null;
-      if (searchColumn === 'email_adress') condition = `${searchColumn}.ilike.%${searchPhrase}%`; //kombinacja do szukania po frazie
-      if (searchColumn === 'bill_phone') condition = `${searchColumn}.ilike.%${searchPhrase}%`; 
-      if (searchColumn === 'klient') condition = `bill_name.ilike.%${searchPhrase}%,bill_surname.ilike.%${searchPhrase}%`;
-      if (searchColumn === 'id') { //nie ma opcji szukania po częśći id, pole w supabase jest typu int.
-        const parsedId = Number(searchPhrase);
-        if (!isNaN(parsedId) && searchPhrase.trim() !== '') {
+      const phrase = searchPhrase.trim();
+      let condition: string | null = null;
+
+      // szukanie po imieni LUB nazwisku klienta
+      if (searchColumn === 'klient') {
+        condition = `bill_name.ilike.%${phrase}%,bill_surname.ilike.%${phrase}%`;
+      } 
+      
+      // szukanie po ID które jest typu numerycznego więc dopasowanie jedynie na equals
+      else if (searchColumn === 'id') {
+        const parsedId = Number(phrase);
+        if (!isNaN(parsedId) && phrase !== '') {
           condition = `${searchColumn}.eq.${parsedId}`;
         }
+      } 
+      
+      // Dynamicznie wysuzkiwanie dal reszty podstawowych danych typu string, injectowanie kolumny i frazy
+      else {
+        condition = `${searchColumn}.ilike.%${phrase}%`;
       }
+
+      // Wykonanie
       if (condition) {
         query = query.or(condition);
       }
