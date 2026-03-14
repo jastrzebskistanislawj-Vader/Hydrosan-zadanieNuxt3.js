@@ -148,6 +148,12 @@ const openDetails = (order: Order) => {
   isDrawerOpen.value = true
 }
 
+const closeDetails = () => {
+  selectedOrder.value = null
+  isDrawerOpen.value = false
+}
+
+
 // Miejsce na Twoją logikę pobierania danych, paginację itp.
 // Powodzenia! 🚀
 </script>
@@ -207,7 +213,7 @@ const openDetails = (order: Order) => {
                   :key="order.id" 
                   @click="openDetails(order)" 
                   class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors duration-200"
-                  :class="index % 2 === 0 ? 'bg-white' : 'bg-gray-50'"
+                  :class="selectedOrder?.id === order.id ? 'bg-blue-100 border-b-blue-300' : index % 2 === 0 ? 'bg-white' : 'bg-gray-50'"
                   >
 
                 <td class="px-6 py-4 text-sm text-gray-900">{{ order.id }}</td>
@@ -307,7 +313,7 @@ const openDetails = (order: Order) => {
         <OrderDetailsDrawer 
           :order="selectedOrder" 
           :is-open="isDrawerOpen" 
-          @close="isDrawerOpen = false" 
+          @close="closeDetails()" 
         />
 
       </main>
