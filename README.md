@@ -1,3 +1,59 @@
+# 📦 System Zarządzania Zamówieniami (Recruitment Task)
+**Autor:** Stanisław Jastrzębski  
+**Technologie:** Vue, Nuxt 3, TypeScript, Supabase, Tailwind CSS
+
+---
+
+## 📋 O Projekcie
+Zadanie polegało na przygotowaniu funkcjonalnej i wydajnej tabeli zamówień, która stanowiłaby realne narzędzie pracy dla operatora wewnątrz firmy. Projekt został zaprojektowany jako **solidny fundament pod skalowalny system**, z naciskiem na przewidywalność interfejsu i czystość kodu.
+
+### Kluczowe Cele:
+- **Minimalistyczne GUI:** Skupienie uwagi na danych biznesowych.
+- **Płynność działania:** Eliminacja błędów wizualnych typu *Layout Shift* (stabilny layout).
+- **TypeScript First:** Pełne typowanie danych dla zapewnienia bezpieczeństwa i łatwego utrzymania kodu.
+
+---
+
+## ✨ Główne Funkcjonalności
+
+### 1. Zaawansowana Tabela i Paginacja
+Zastosowałem autorski mechanizm nawigacji i zarządzania danymi:
+- **Inteligentna Paginacja:** Zawsze wyświetla stałą liczbę przycisków (np. 5), co zapobiega "skakaniu" elementów interfejsu i poprawia UX.
+- **Wydajność (Server-side):** Dane pobierane są z bazy Supabase w konkretnych zakresach (`range`), co minimalizuje obciążenie bazy i łącza.
+- **Sortowanie:** Dynamiczne sortowanie po kolumnach ułatwiające błyskawiczne odnajdywanie danych.
+- **Wyszukiwanie:** Możliwość filtrowania danych z wyborem konkretnej kolumny.
+- **Jump to Page:** Opcja bezpośredniego przeskoku do wybranej strony.
+- **Liczba elementów:** Użytkownik może samodzielnie definiować, ile rekordów chce widzieć na jednej stronie.
+
+### 2. Side Drawer (Szczegóły Zamówienia)
+Zamiast przechodzić do nowej podstrony, zastosowałem boczny panel (Drawer):
+- Pozwala na błyskawiczny podgląd detali (dane klienta, adres, lista produktów) bez tracenia kontekstu listy głównej.
+- Panel jest przejrzysty, a informacje w nim grupowane są logicznie i kontekstowo.
+
+### 3. UX i Zarządzanie Stanem (Loading/Error)
+Zadbałem o jasną komunikację stanów aplikacji:
+- **Overlay Loader:** Podczas pobierania danych tabela jest "zamrażana" i przykrywana loaderem z efektem `backdrop-blur`. Zapobiega to interakcji z nieaktualnymi danymi.
+- **Contextual Error Handling:** Błędy połączenia wyświetlane są bezpośrednio w miejscu tabeli, co nie rozbija struktury strony.
+- **Walidacja danych:** Minimalistyczna walidacja pól daty oraz kwot w filtrach.
+
+---
+
+## 📈 Kierunki Dalszego Rozwoju
+Projekt został zaprojektowany modularnie, co pozwala na łatwe wdrożenie kolejnych rozwiązań:
+
+* **Stan filtrów w URL (Deep Linking):** Synchronizacja stanu filtrów z adresem URL, co pozwala na przesyłanie linków do konkretnych widoków.
+* **Bulk Actions (Operacje grupowe):** Implementacja checkboxów do masowej zmiany statusów lub generowania dokumentów dla wielu zamówień jednocześnie.
+* **Responsywność (Mobile First):** Optymalizacja widoku tabeli pod ekrany mobilne (np. horyzontalny scroll z przypiętą kolumną ID).
+* **Eksport danych:** Moduł generowania plików CSV/Excel na podstawie aktualnie przefiltrowanego widoku.
+* **Makra i Presety:** Możliwość zapisywania ulubionych zestawów filtrów (np. "Dzisiejsze zamówienia do opłacenia").
+
+
+
+---
+---
+
+
+
 # Zadanie rekrutacyjne - Frontend Developer (Vue / Nuxt 3)
 
 Cześć! Bardzo się cieszymy, że bierzesz udział w naszym procesie rekrutacyjnym. Twoim zadaniem będzie stworzenie aplikacji wyświetlającej listę zamówień oraz ich szczegóły, korzystając z przygotowanego przez nas środowiska.
